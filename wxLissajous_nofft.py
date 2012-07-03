@@ -51,11 +51,11 @@ def buffered(idleevent):
   global inbuffered
   if inbuffered: return
   inbuffered = True
-  wx.CallLater(1, update)
+  wx.CallLater(10, update, idleevent)
 
-def update():
+def update(idleevent):
   global inbuffered, start
-  stream.write(np.array(d[start:start+SHIFT], dtype='int16').tostring())
+  stream.write(np.array(d[start*2:(start+SHIFT)*2], dtype='int16').tostring())
   x, y = r[start:start+N], l[start:start+N]
 
   sp0.cla()
@@ -90,6 +90,7 @@ def update():
   fig.canvas.draw_idle()
   start += SHIFT
   inbuffered = False
+  idleevent.RequestMore(needMore=True)
   if start + N > s:
     stream.close()
     pa.terminate()
