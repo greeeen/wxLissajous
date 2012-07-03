@@ -9,6 +9,7 @@ data: The "Hatsune Miku's negi up down data" is wave audio captured
 
 import sys, os
 import wave
+import pyaudio
 import numpy as np
 import matplotlib
 matplotlib.use('WXAgg')
@@ -17,7 +18,11 @@ import matplotlib.pyplot as plt
 filename = 'data/sm5277506_short.wav' # 2 (LR) channel * 2 ('int16') bytes
 
 wf = wave.open(filename, 'rb')
+fs = wf.getframerate() # sampling frequency
 buf = wf.readframes(wf.getnframes())
+pa = pyaudio.PyAudio()
+stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
+  channels=wf.getnchannels(), rate=wf.getframerate(), output=True)
 wf.close()
 
 fig = plt.figure()
@@ -26,10 +31,10 @@ sp1 = fig.add_subplot(221)
 sp2 = fig.add_subplot(224)
 sp3 = fig.add_subplot(223)
 
-d = np.frombuffer(buf, dtype='int16') / 32768.0 # regulation -1.0 <-> +1.0
-d /= 5.0 # autoscale off
-l = d[0::2] # Left channel
-r = d[1::2] # Right channel
+d = np.frombuffer(buf, dtype='int16')
+e = d / (5.0 * 32768.0) # autoscale off and regulation -1.0 <-> +1.0
+l = e[0::2] # Left channel
+r = e[1::2] # Right channel
 print len(d)
 
 start = 1500000 # 0        # sampling start position
@@ -37,11 +42,11 @@ N = 3072 # 1792 # 512      # number of FFT samples
 SHIFT = 1024    # 128      # number of windowfunc shift samples
 
 hammingWindow = np.hamming(N)
-fs = wf.getframerate() # sampling frequency
 F = np.fft.fftfreq(N, d=1.0/fs)
 
 def update(idleevent):
   global start
+  stream.write(np.array(d[start:start+SHIFT*2], dtype='int16').tostring())
   x, y = r[start:start+N], l[start:start+N]
 
   sp0.cla()
@@ -73,7 +78,10 @@ def update(idleevent):
 
   fig.canvas.draw_idle()
   start += SHIFT
-  if start + N > len(l): sys.exit()
+  if start + N > len(l):
+    stream.close()
+    pa.terminate()
+    sys.exit()
 
 import wx
 wx.EVT_IDLE(wx.GetApp(), update)
