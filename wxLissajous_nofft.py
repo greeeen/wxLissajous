@@ -42,8 +42,8 @@ s = len(l)
 print len(d)
 
 start = 1500000 # 0        # sampling start position
-N = 3072 # 1792 # 512      # number of FFT samples
-SHIFT = 1024    # 128      # number of windowfunc shift samples
+N = 24576 # 3072 # 1792 # 512 # number of FFT samples (matplotlib is low speed)
+SHIFT = 8192 # 1024 # 128  # number of windowfunc shift samples
 
 hammingWindow = np.hamming(N)
 F = np.fft.fftfreq(N, d=1.0/fs)
@@ -68,7 +68,6 @@ def update(idleevent):
   sp0.set_xlabel('x')
   sp0.set_ylabel('y')
 
-  '''
   sp1.cla()
   sp1.plot(xrange(start, start+N), y, 'b')
   sp1.axis([start, start+N, -0.3, 0.3])
@@ -81,6 +80,7 @@ def update(idleevent):
   sp2.set_xlabel('amplitude')
   sp2.set_ylabel('time [sample]')
 
+  '''
   Z = np.fft.fft(hammingWindow * (x + y))
   amplitudeSpectrum = [np.sqrt(c.real ** 2 + c.imag ** 2) for c in Z]
   sp3.cla()
