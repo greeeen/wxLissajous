@@ -14,7 +14,9 @@ import numpy as np
 import matplotlib
 matplotlib.use('WXAgg')
 import matplotlib.pyplot as plt
+import wx
 
+usetimer = True
 filename = 'data/sm5277506_short.wav' # 2 (LR) channel * 2 ('int16') bytes
 
 wf = wave.open(filename, 'rb')
@@ -51,7 +53,7 @@ def buffered(idleevent):
   global inbuffered
   if inbuffered: return
   inbuffered = True
-  wx.CallLater(10, update, idleevent)
+  wx.CallLater(2, update, idleevent)
 
 def update(idleevent):
   global inbuffered, start
@@ -90,15 +92,16 @@ def update(idleevent):
   fig.canvas.draw_idle()
   start += SHIFT
   inbuffered = False
-  idleevent.RequestMore(needMore=True)
+  if not usetimer: idleevent.RequestMore(needMore=True)
   if start + N > s:
     stream.close()
     pa.terminate()
     sys.exit()
 
-import wx
-#timer = wx.Timer()
-#timer.Start(20)
-#wx.EVT_TIMER(wx.GetApp(), update)
-wx.EVT_IDLE(wx.GetApp(), buffered)
+if usetimer:
+  timer = wx.Timer(wx.GetApp(), id=1)
+  timer.Start(1)
+  wx.EVT_TIMER(wx.GetApp(), 1, buffered)
+else:
+  wx.EVT_IDLE(wx.GetApp(), buffered)
 plt.show()
