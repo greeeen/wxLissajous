@@ -16,11 +16,12 @@ matplotlib.use('WXAgg')
 import matplotlib.pyplot as plt
 import wx
 
-usetimer = True
+usetimer = False # True
 filename = 'data/sm5277506_short.wav' # 2 (LR) channel * 2 ('int16') bytes
 
 wf = wave.open(filename, 'rb')
 fs = wf.getframerate() # sampling frequency
+nb = wf.getnchannels() * wf.getsampwidth() # 2(LR) * 2bytes
 buf = wf.readframes(wf.getnframes())
 pa = pyaudio.PyAudio()
 stream = pa.open(format=pa.get_format_from_width(wf.getsampwidth()),
@@ -57,7 +58,8 @@ def buffered(idleevent):
 
 def update(idleevent):
   global inbuffered, start
-  stream.write(np.array(d[start*2:(start+SHIFT)*2], dtype='int16').tostring())
+  #stream.write(np.array(d[start*2:(start+SHIFT)*2], dtype='int16').tostring())
+  stream.write(buf[start*nb:(start+SHIFT)*nb])
   x, y = r[start:start+N], l[start:start+N]
 
   sp0.cla()
